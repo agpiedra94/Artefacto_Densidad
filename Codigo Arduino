@@ -1,0 +1,167 @@
+#include <EEPROM.h>
+
+int FSR_PIN = A1;
+int EchoPin = 5;
+int TriggerPin = 6;
+float VCC = 4.98;       //m
+float R_DIV = 3230.0;   //n
+float respost;
+float respuesta;
+int mensaje=0;
+int mensd=0;
+int eeAddress = 0;
+int eeAddress1 = 1;
+boolean Key=false;
+boolean Mey=false;
+unsigned int i=0;
+unsigned int j=0;
+const unsigned int numReadings = 50;
+unsigned int vector[numReadings];
+unsigned int vecto[numReadings];
+unsigned int vector1[numReadings];
+unsigned int vecto1[numReadings];
+float P1;
+float H1;
+float P2;
+float H2;
+float valor;
+float valor1;
+
+int ultrasonido(int x, int y)  
+      { float duration, distanceCm;
+      digitalWrite(x,LOW);
+      delayMicroseconds(4);
+      digitalWrite(x,HIGH);
+      delayMicroseconds(10);
+      digitalWrite(x,LOW);
+      duration = pulseIn(y,HIGH);
+      float resultado;                  
+      resultado = (41.4-duration*10/292/2);             
+      return resultado;
+      
+                    
+      }
+
+
+int martoli(int m, int n)  
+      {int fsrADC = analogRead(FSR_PIN);
+      if (fsrADC != 0)
+          {float fsrV = fsrADC * m / 1023.0;
+          float fsrR = n * (m / fsrV -1);
+          float fsrG = 1.0 / fsrR;
+          float force;
+          if (fsrR >= 3250)
+              {force = 6.54*fsrG / 0.000000642857 -569;}
+           else 
+              {force = 6.54*fsrG / 0.000000642857 -569;}
+           int result;                  
+           result = force;             
+           return result;
+           
+           }
+            else
+                {
+                  // No pressure detected
+                }
+        }
+
+void setup(){
+  Serial.begin(9600);
+  pinMode(TriggerPin, OUTPUT);
+  pinMode(EchoPin, INPUT);
+}
+
+void loop() {
+                                      if (Serial.available()>0)
+                                    {      mensaje = Serial.read();
+                      while (mensaje=='1')
+                      {
+                        
+
+                        for (unsigned int i = 0; i <numReadings; i++)
+                            {
+                              
+                              respost=ultrasonido(TriggerPin, EchoPin);
+                              respuesta=martoli(VCC,R_DIV);
+                              H1=respost;
+                              P1= respuesta;
+                              //Serial.println(H1);
+                              //Serial.println(P1);
+                              delay(100);
+                              vector[i]=P1;
+                              vecto[i]=H1;
+                              
+                              
+                            }
+                       float s=0;
+                       float tir=0;
+                       for (unsigned int j=0; j< sizeof(vector)/sizeof(vector[0]); j++)
+                       {
+                          s += vector[j];
+                          tir += vecto[j]; 
+                         
+                         
+                          //if (j==50)
+                       }
+                       float promedio;
+                       float prom2;
+                       promedio=s/50;
+                       prom2= tir/50;
+                                            
+                       Serial.println(prom2);
+                       Serial.println(promedio);
+                      
+                       
+                       break;
+                       
+                       EEPROM.write( eeAddress, promedio );
+                       EEPROM.write( eeAddress1, prom2 );
+                       }
+
+
+                        while (mensaje=='2')
+                      {
+                        
+
+                        for (unsigned int i = 0; i <numReadings; i++)
+                            {
+                              respost=ultrasonido(TriggerPin, EchoPin);
+                              respuesta=martoli(VCC,R_DIV);
+                              P2=respuesta;
+                              H2=respost;
+                              vector1[i]=P2;
+                              vecto1[i]=H2;
+                              delay(100);
+                            }
+                       float sd=0;
+                       float tirr=0;
+                       for (unsigned int j=0; j< sizeof(vector1)/sizeof(vector1[0]); j++)
+                       {
+                          sd += vector1[j];
+                          tirr += vecto1[j];
+                          //if (j==50)
+                       }
+                       float promedio1;
+                       float prom2;
+                       promedio1=sd/50;
+                       prom2 = tirr/50;
+                       valor = EEPROM.read(eeAddress);
+                       valor1= EEPROM.read(eeAddress1);
+                       float densidad;
+                       float volumen;
+                       volumen = (prom2 - valor1)*75.43;
+                       densidad = (promedio1 - valor)/((prom2 - valor1)*75.43);
+                       Serial.println(volumen);
+                       Serial.println(densidad);                     
+                       delay(500);
+                       break;
+                       }
+
+
+
+
+
+                       
+}
+                                     
+ }
