@@ -1,3 +1,5 @@
+#include <Smartlab.h>
+
 #include <EEPROM.h>
 
 int FSR_PIN = A1;
@@ -64,11 +66,15 @@ int martoli(int m, int n)
                   // No pressure detected
                 }
         }
+        
+Smartlab smartlab(Serial);
 
 void setup(){
   Serial.begin(9600);
   pinMode(TriggerPin, OUTPUT);
   pinMode(EchoPin, INPUT);
+
+  smartlab.setUrl("https://smartlab.caminstech.upc.edu/api/device/5c8b8f9d50461600225afd97/data", "GzjNol0H6AWfnrak4JSCgmPxwdDRhKQ1");
 }
 
 void loop() {
@@ -152,7 +158,12 @@ void loop() {
                        volumen = (prom2 - valor1)*75.43;
                        densidad = (promedio1 - valor)/((prom2 - valor1)*75.43);
                        Serial.println(volumen);
-                       Serial.println(densidad);                     
+                       Serial.println(densidad); 
+
+                       smartlab.addValue("densidad", densidad);
+                       smartlab.addValue("volumen", volumen);
+                       smartlab.send();
+
                        delay(500);
                        break;
                        }
